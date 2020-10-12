@@ -1,9 +1,5 @@
-// The Nature of Code
-// <http://www.shiffman.net/teaching/nature>
-// Spring 2012
-// Box2DProcessing example
-
 // A fixed boundary class
+// !! Generalized
 
 class Boundary {
 

@@ -1,10 +1,12 @@
 //A rectangular box
+// !! Generalized 
 class Box {
   
   Body body;
   
   float x,y;
   float w,h;
+  
   
   // Constructor: input in pixel (do not worry about /2)
   Box(float x_, float y_, float w_, float h_) {
@@ -39,6 +41,11 @@ class Box {
     // Step 5: Attach Shape to Body with Fixture
     body.createFixture(fd);
   }
+  /*
+  public Vec2 getWorldCenter() {
+    return body.getWorldCenter();  
+  }
+  */
   
   void display() {
     Vec2 pos = box2d.getBodyPixelCoord(body);
