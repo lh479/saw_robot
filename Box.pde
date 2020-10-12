@@ -39,6 +39,11 @@ class Box {
     // Step 5: Attach Shape to Body with Fixture
     body.createFixture(fd);
   }
+  /*
+  public Vec2 getWorldCenter() {
+    return body.getWorldCenter();  
+  }
+  */
   
   void display() {
     Vec2 pos = box2d.getBodyPixelCoord(body);
