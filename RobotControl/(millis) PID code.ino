@@ -7,7 +7,7 @@ int encoder0Pos = 0;
 int i;
 int previousTime;
 double Setpoint;
-double KP = 2;
+double KP = 0.2;
 double presentErr;
 double Input;
 double Output;
@@ -15,8 +15,8 @@ double Output;
 void setup() {
   Serial.begin(9600);
   pinMode(encoder0PinA, INPUT);
- pinMode(encoder0PinB, INPUT);
- pinMode(phase, OUTPUT);
+  pinMode(encoder0PinB, INPUT);
+  pinMode(phase, OUTPUT);
   Setpoint = 40;
  attachInterrupt(digitalPinToInterrupt(1),doEncode, RISING);
 }
@@ -35,12 +35,14 @@ void loop() {
     Input = abs(Speed);
     previousTime = (int)millis();
     encoder0Pos = 0;
-    Serial.print(Input);
+     Serial.print(Input);
     Serial.print(" ");
     Serial.println(Output);
     Serial.print(" ");  
-    //Serial.println(Setpoint);
+    Serial.println(Setpoint);
   }
+
+
   i++;
 }
 
