@@ -22,16 +22,16 @@ void loop() {
   analogWrite(A4, 255);//motor spin, duty cycle (0-255)
   digitalWrite(phase, HIGH);//forward = HIGH, backward=LOW
 
-
+  //if (i%100000 == 0) {
     Serial.print("RPM:");
     currentTime = micros();
-    //Serial.println(currentTime-previousTime);
+    Serial.println(currentTime-previousTime);
     long Speed = ((60 * 1000000 * 3.94 *  encoder0Pos/(12*379.17)) /(currentTime-previousTime));
     Serial.println(Speed);
     previousTime = micros();
     encoder0Pos = 0;
-
-
+  //}
+  //i++;
 }
 
 void doEncode()
