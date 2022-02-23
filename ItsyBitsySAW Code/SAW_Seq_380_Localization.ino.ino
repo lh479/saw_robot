@@ -26,13 +26,11 @@
 int zone;
 float xCoordinate; // Localization output
 float targetXCoordinate = 50;
-float RTemp;
-float GTemp;
-float BTemp;
-float redDiff;
-float greenDiff;
-float blueDiff;
-float tempDiff;
+float RTemp, GTemp, BTemp;
+float redDiff, greenDiff, blueDiff, tempDiff;
+float red, green, blue;
+float xPosMin, xPosMax;
+float diffIndex = 999;
 
 // Accelerometer helper variables
 byte X0,X1,Y0,Y1,Z0,Z1;
@@ -135,7 +133,10 @@ void setup() {
     pinMode (motor2B,INPUT);
     //attachInterrupt(digitalPinToInterrupt(motor1A), motor1_ISR, RISING);
     attachInterrupt(digitalPinToInterrupt(motor2A), motor2_ISR, RISING);
+
+    // Delay 3s and initialize localization
     delay(3000);
+    init_localize();
 
     // Default motor states
     analogWrite(en2, mode2Speed);
@@ -175,91 +176,87 @@ void loop() {
     Serial.println(currentPos1);
   }
   else{
-    // Sequences
-    for (int i=0;i<15;i++){                 //  Hard code this value for each different array 
-      Serial.println(i); 
-      localize();
-      reachTargetX();
-//      if (sequenceArray[i] == 1){
-//        forward1();
-//      }
-//      else if (sequenceArray[i] == 2){
-//        backward1();
-//      }
-//      else if (sequenceArray[i] == 3){
-//        inward1();
-//      }
-//      else if (sequenceArray[i] == 4){
-//        outward1();
-//      }
-//      else if (sequenceArray[i] == 5){
-//        front_backward1();
-//      }
-//      else if (sequenceArray[i] == 6){
-//        back_forward1();
-//      }
-//      else if (sequenceArray[i] == 7){
-//        front_forward1();
-//      }
+    for (int i=0;i<15;i++){                 // Sequences - hard code this value for each different array 
+      localize();b
+      //reachTargetX();
+//      if (sequenceArray[i] == 1) forward1();
+//      else if (sequenceArray[i] == 2) backward1();
+//      else if (sequenceArray[i] == 3) inward1();
+//      else if (sequenceArray[i] == 4) outward1();
+//      else if (sequenceArray[i] == 5) front_backward1();
+//      else if (sequenceArray[i] == 6) back_forward1();
+//      else if (sequenceArray[i] == 7) front_forward1();
 //      delay(3);
     }
   }
 }
 
 /***** Localization with linear gradient ******/
-void localize() {
-  float red, green, blue;
-  float xPosMin;
-  float xPosMax;
+void init_localize() {
   tcs.getRGB(&red, &green, &blue);
-  Serial.print("R:\t"); Serial.print(red); 
-  Serial.print("\tG:\t"); Serial.print(green); 
-  Serial.print("\tB:\t"); Serial.print(blue);
+//  Serial.print("R:\t"); Serial.print(red); 
+//  Serial.print("\tG:\t"); Serial.print(green); 
+//  Serial.print("\tB:\t"); Serial.print(blue);
   if (red > blue && blue > green) {
     zone = 6;
     xPosMin = 6;
     xPosMax = 12.5;
-    Serial.println("ZONE SIX");
   }
   else if (blue > red && red > green) {
     zone = 5;
     xPosMin = 12.5;
     xPosMax = 20;
-    Serial.println("ZONE FIVE");
   }
   else if (blue > green && green > red) {
     zone = 4;
     xPosMin = 20;
     xPosMax = 48;
-    Serial.println("ZONE FOUR");
   }
   else if (green > blue && blue > red) {
     zone = 3;
     xPosMin = 48;
     xPosMax = 54.5;
-    Serial.println("ZONE THREE");
   }
   else if (green > red && red > blue) {
     zone = 2;
     xPosMin = 54.5;
     xPosMax = 65;
-    Serial.println("ZONE TWO");
   }
   else if (red > green && green > blue) {
     zone = 1;
     xPosMin = 65;
     xPosMax = 74;
-    Serial.println("ZONE ONE");
   }
   else {
     zone = -1;
-    Serial.println("UNKNOWN ZONE");
   }
-  float diffIndex = 9999;
   while (xPosMin < xPosMax) {
-    RTemp = 179 - xPosMin * (8.16 + xPosMin * (0.13 - 0.000342 * xPosMin));
-    GTemp = 47.2 - xPosMin * (0.918 + xPosMin * (0.0933 - 0.00105 * xPosMin));
-    BTemp = 22.8 + xPosMin * (9.04 - xPosMin * (0.235 + 0.00155 * xPosMin));
+    RTemp = 179 - 8.16*xPosMin + 0.13*xPosMin*xPosMin - 0.000342*xPosMin*xPosMin*xPosMin;
+    GTemp = 47.2 - 0.918*xPosMin + 0.0933*xPosMin*xPosMin - 0.00105*xPosMin*xPosMin*xPosMin;
+    BTemp = 22.8 + 9.04*xPosMin - 0.235*xPosMin*xPosMin + 0.00155*xPosMin*xPosMin*xPosMin;
+    redDiff = abs(RTemp - red);
+    greenDiff = abs(GTemp - green);
+    blueDiff = abs(BTemp - blue);
+    tempDiff = redDiff + greenDiff + blueDiff;
+    if (tempDiff < diffIndex) {
+      diffIndex = tempDiff;
+      xCoordinate = xPosMin;
+    }
+    xPosMin = xPosMin + 0.5;
+    //Serial.println(String(redDiff) + " " +  String(greenDiff) + " " + String(blueDiff));
+  }
+  Serial.println("ZONE " + String(zone) + " " + String(xCoordinate)); 
+}
+
+/***** Localization with linear gradient ******/
+void localize() {
+  xPosMin = xCoordinate - 1.5;
+  xPosMax = xCoordinate + 1.5;
+  tcs.getRGB(&red, &green, &blue);
+  while (xPosMin <= xPosMax) {
+    RTemp = 179 + xPosMin * (-8.16 + xPosMin * (0.13 - 0.000342 * xPosMin));
+    GTemp = 47.2 + xPosMin * (-0.918 + xPosMin * (0.0933 - 0.00105 * xPosMin));
+    BTemp = 22.8 + xPosMin * (9.04 + xPosMin * (-0.235 + 0.00155 * xPosMin));
     redDiff = abs(RTemp - red);
     greenDiff = abs(GTemp - green);
     blueDiff = abs(BTemp - blue);
@@ -270,7 +267,7 @@ void localize() {
     }
     xPosMin = xPosMin + 0.5;
   }
-  //Serial.println(xCoordinate); 
+  Serial.println(xCoordinate); 
 }
 
 /********** Reach Target X Coordinate ********/
